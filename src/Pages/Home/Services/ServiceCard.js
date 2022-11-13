@@ -3,7 +3,7 @@ import React from 'react'
 export default function ServiceCard({ service }) {
     const { name, description, img } = service;
     return (
-        <div className="card px-10 shadow-xl ">
+        <div className="card px-10 shadow ">
             <figure>
                 <img src={img} alt="" />
             </figure>
