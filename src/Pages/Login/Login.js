@@ -5,7 +5,10 @@ import toast from 'react-hot-toast';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Spinner from '../../Components/Spinner/Spinner';
 import { AuthContext } from '../../Context/AuthProvider/AuthProvider';
+import useToken from '../../hooks/useToken';
 import googleLogin from './googleLogin';
+
+const provider = new GoogleAuthProvider();
 
 export default function Login() {
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
@@ -13,9 +16,13 @@ export default function Login() {
     const [spin, SetSpin] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+    const [loginEmail, setLoginEmail] = useState();
+    const [token] = useToken(loginEmail)
     const [err, setErr] = useState('');
+    const from = location.state?.from?.pathname || '/';
 
-    const from = location.state?.from?.pathname || '/'
+    if (token) return navigate(from, { replace: true })
+
     const onSubmit = data => {
         SetSpin(true);
         console.log(data);
@@ -25,7 +32,8 @@ export default function Login() {
                 toast('Login successfull')
                 console.log('vitore')
                 SetSpin(false)
-                navigate(from, { replace: true })
+                // navigate(from, { replace: true })
+                setLoginEmail(data.email);
             })
             .catch(err => {
                 setErr(err.message)
@@ -34,10 +42,39 @@ export default function Login() {
             })
     }
 
+    const handleGoogle = () => {
+        providerLogin(provider)
+            .then(res => {
+                // setLoginEmail(res.user.email);
+                console.log(res.user.email)
+                saveUser(res.user.email, res.user.displayName)
+            })
+            .catch(err => console.log(err))
+    }
+
+    const saveUser = (email, name) => {
+        console.log(email, name)
+        fetch(`${process.env.REACT_APP_URL}/users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, name })
+        })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data)
+                setLoginEmail(email);
+            })
+            .catch(err => console.log(err))
+    }
+
+
     console.log('baire')
     if (loading) return <Spinner />
     // if (spin) return <Spinner />
-    if (user?.uid) return <Navigate to='/' />
+    if (token) return <Navigate to={from} replace />
+    // if (user?.uid) return <Navigate to='/' />
     return (
         <div className='lg:mt-36 mx-4'>
             <div className='flex justify-center'>
@@ -70,7 +107,7 @@ export default function Login() {
                             <div className='mx-2'>Or</div>
                             <div className=' h-px w-1/3 bg-slate-500'></div>
                         </div>
-                        <div onClick={() => googleLogin(providerLogin)} className="btn btn-outline w-full mt-4">Sign In with Google</div>
+                        <div onClick={handleGoogle} className="btn btn-outline w-full mt-4">Sign In with Google</div>
                     </form>
                 </div>
             </div>

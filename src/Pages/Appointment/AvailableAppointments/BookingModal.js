@@ -1,9 +1,10 @@
 import { format } from 'date-fns';
 import React, { useContext } from 'react'
 import { useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import { AuthContext } from '../../../Context/AuthProvider/AuthProvider';
 
-export default function BookingModal({ bookOption, selected }) {
+export default function BookingModal({ bookOption, selected, setBookOption, refetch }) {
     const { register, handleSubmit, formState: { errors }, watch } = useForm();
     const { name, slots } = bookOption;
     const { user, loading } = useContext(AuthContext);
@@ -23,12 +24,27 @@ export default function BookingModal({ bookOption, selected }) {
 
         }
         console.log(booking)
+
+        fetch(`${process.env.REACT_APP_URL}/bookings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': "application/json"
+            },
+            body: JSON.stringify(booking)
+        })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data)
+                if (data.insertedId) toast.success('Booking successfull')
+                else toast.error(data.message)
+                refetch();
+            })
+            .catch(err => toast(err))
+        setBookOption(null)
     }
     return (
         <div>
-
             <input type="checkbox" id="my-modal-6" className="modal-toggle" />
-
             <div className="modal modal-bottom sm:modal-middle">
 
                 <div className="modal-box">
@@ -40,7 +56,7 @@ export default function BookingModal({ bookOption, selected }) {
                     <form onSubmit={handleSubmit(onSubmit)} className='w-full'>
 
                         <input
-                            className='input-bordered input rounded-lg w-full mb-4 mt-4  p-2 bg-slate-100'
+                            className=' input-bordered input rounded-lg w-full mb-4 mt-4  p-2 bg-slate-100'
                             disabled
                             type="text"
                             placeholder={format(selected, 'PP')}
@@ -60,7 +76,7 @@ export default function BookingModal({ bookOption, selected }) {
                             type="text"
                             defaultValue={user?.displayName}
                             placeholder="Full Name"
-                            className=" input input-bordered w-full "
+                            className=" input input-bordered w-full mb-2 "
                         />
                         {
                             errors?.fullName && <small className='text-red-500 block mb-4'>{errors.fullName.message}</small>
@@ -69,7 +85,7 @@ export default function BookingModal({ bookOption, selected }) {
                             {...register('phone', { required: 'Phone number is required' })}
                             type="number"
                             placeholder="Phone Number"
-                            className=" input input-bordered w-full "
+                            className=" input input-bordered w-full mb-2"
                         />
                         {
                             errors?.phone && <small className='text-red-500 block mb-4'>{errors.phone.message}</small>
@@ -81,7 +97,7 @@ export default function BookingModal({ bookOption, selected }) {
                             defaultValue={user?.email}
                             readOnly
                             placeholder="Email"
-                            className="input input-bordered w-full " />
+                            className="input input-bordered w-full mb-2" />
                         {
                             errors?.email && <small className='text-red-500 block mb-4'>{errors.email.message}</small>
                         }

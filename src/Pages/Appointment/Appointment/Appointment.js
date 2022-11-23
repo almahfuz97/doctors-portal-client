@@ -8,7 +8,7 @@ export default function Appointment() {
     const [selected, setSelected] = useState(new Date());
 
     return (
-        <div className='mt-15 px-7 lg:mt-72'>
+        <div className='mt-12 px-7 lg:mt-24'>
             <AppointmentCalendar
                 selected={selected}
                 setSelected={setSelected} />
